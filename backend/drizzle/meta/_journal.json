@@ -15,6 +15,13 @@
       "when": 1759762696252,
       "tag": "0001_fancy_marvex",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1759764088374,
+      "tag": "0002_secret_morlocks",
+      "breakpoints": true
     }
   ]
 }
