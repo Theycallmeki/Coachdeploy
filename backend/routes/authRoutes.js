@@ -1,10 +1,19 @@
 import express from "express";
-import { getUsers, createUser, deleteUser } from "../controller/authController.js";
+import cookieParser from "cookie-parser";
+import {
+  register,
+  login,
+  logout,
+  authChecker,
+} from "../controller/authController.js";
 
 const router = express.Router();
 
-router.get("/", getUsers);
-router.post("/", createUser);
-router.delete("/:id", deleteUser);
+router.use(cookieParser()); // for reading cookies
+
+router.post("/register", register);
+router.post("/login", login);
+router.post("/logout", logout);
+router.get("/check", authChecker);
 
 export default router;

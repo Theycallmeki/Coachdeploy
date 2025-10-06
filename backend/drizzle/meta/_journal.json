@@ -8,6 +8,13 @@
       "when": 1759760038725,
       "tag": "0000_wise_jubilee",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1759762696252,
+      "tag": "0001_fancy_marvex",
+      "breakpoints": true
     }
   ]
 }
