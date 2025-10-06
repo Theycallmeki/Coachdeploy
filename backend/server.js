@@ -3,6 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/authRoutes.js";
 import goalRoutes from "./routes/goalRoutes.js";
+import bmiRoutes from "./routes/bmiRoutes.js"
 
 const app = express();
 const PORT = 3001;
@@ -16,6 +17,7 @@ app.use(cookieParser());
 
 app.use("/auth", authRoutes);
 app.use("/api", goalRoutes)
+app.use("/api", bmiRoutes)
 
 app.listen(PORT, () =>
   console.log(`✅ Server running on http://localhost:${PORT}`)
