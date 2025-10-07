@@ -9,7 +9,7 @@ import {
 
 const router = express.Router();
 
-router.use(cookieParser()); // for reading cookies
+router.use(cookieParser());
 
 router.post("/register", register);
 router.post("/login", login);
