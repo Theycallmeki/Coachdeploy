@@ -23,7 +23,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import axios from 'axios';
+import api from '../services/api'; // ✅ use api.js
 
 const isLoggedIn = ref(false);
 const router = useRouter();
@@ -31,9 +31,7 @@ const router = useRouter();
 // Check login status from backend
 const checkAuth = async () => {
   try {
-    const res = await axios.get('http://localhost:3001/auth/check', {
-      withCredentials: true,
-    });
+    const res = await api.get('/auth/check'); // ✅ use api.js
     isLoggedIn.value = res.data.loggedIn;
   } catch (err) {
     console.error('Auth check failed:', err);
@@ -48,9 +46,7 @@ onMounted(() => {
 // Logout handler
 const handleLogout = async () => {
   try {
-    await axios.post('http://localhost:3001/auth/logout', {}, {
-      withCredentials: true,
-    });
+    await api.post('/auth/logout'); // ✅ use api.js
     isLoggedIn.value = false;
     router.push('/auth'); // redirect to auth page after logout
   } catch (err) {

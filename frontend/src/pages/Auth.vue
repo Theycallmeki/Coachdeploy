@@ -80,22 +80,15 @@ async function loginUser() {
 // REGISTER METHOD
 async function registerUser() {
   try {
-    const res = await fetch('http://localhost:3001/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        name: name.value.trim(),
-        email: email.value.trim(),
-        password: password.value,
-        bmi: Number(bmi.value),
-      }),
+    const res = await api.post('/auth/register', {
+      name: name.value.trim(),
+      email: email.value.trim(),
+      password: password.value,
+      bmi: Number(bmi.value),
     });
 
-    const data = await res.json();
-
-    if (res.ok && data.success) {
-      message.value = data.message || 'Registered successfully!';
+    if (res.data.success) {
+      message.value = res.data.message || 'Registered successfully!';
       success.value = true;
 
       setTimeout(() => {
@@ -103,12 +96,12 @@ async function registerUser() {
         message.value = '';
       }, 2000);
     } else {
-      message.value = data.message || data.error || 'Registration failed.';
+      message.value = res.data.message || 'Registration failed.';
       success.value = false;
     }
   } catch (err) {
     console.error('Register error:', err);
-    message.value = 'Server error. Please try again.';
+    message.value = err.response?.data?.error || 'Server error. Please try again.';
     success.value = false;
   }
 }
