@@ -2,9 +2,10 @@ import { db } from "../db/index.js";
 import { goals } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 
+// ✅ Get all goals for the logged-in user
 export const getGoals = async (req, res) => {
   try {
-    const { userId } = req.params;
+    const userId = req.user.id; // ✅ get userId from JWT
     const userGoals = await db
       .select()
       .from(goals)
@@ -16,11 +17,13 @@ export const getGoals = async (req, res) => {
   }
 };
 
+// ✅ Create a new goal for logged-in user
 export const createGoal = async (req, res) => {
   try {
-    const { userId, name, description } = req.body;
+    const { name, description } = req.body;
+    const userId = req.user.id; // ✅ get userId from JWT
 
-    if (!userId || !name || !description) {
+    if (!name || !description) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
@@ -36,6 +39,7 @@ export const createGoal = async (req, res) => {
   }
 };
 
+// ✅ Update an existing goal
 export const updateGoal = async (req, res) => {
   try {
     const { id } = req.params;
@@ -54,6 +58,7 @@ export const updateGoal = async (req, res) => {
   }
 };
 
+// ✅ Delete a goal
 export const deleteGoal = async (req, res) => {
   try {
     const { id } = req.params;

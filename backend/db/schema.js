@@ -1,11 +1,10 @@
-import { integer, text, real } from "drizzle-orm/gel-core"
-import { pgTable, serial, varchar, timestamp} from "drizzle-orm/pg-core"
+import { pgTable, serial, varchar, integer, text, real, timestamp } from "drizzle-orm/pg-core"
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  name: varchar("name").notNull(),
-  email: varchar("email").notNull().unique(),
-  password_hash: varchar("password_hash").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  password_hash: varchar("password_hash", { length: 255 }).notNull(),
   bmi: real("bmi"),
 })
 
