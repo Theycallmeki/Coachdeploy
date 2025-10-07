@@ -16,7 +16,6 @@ export const register = async (req, res) => {
 
     const { name, email, password, bmi } = req.body;
 
-    // ✅ Check required fields
     if (!name || !email || !password || !bmi) {
       console.log("⚠️ Missing required field(s)");
       return res
@@ -24,13 +23,11 @@ export const register = async (req, res) => {
         .json({ message: "Please input all required fields." });
     }
 
-    // ✅ Validate email format
     if (!validator.isEmail(email)) {
       console.log("⚠️ Invalid email format:", email);
       return res.status(400).json({ message: "Invalid email format." });
     }
 
-    // ✅ Validate strong password
     if (!validator.isStrongPassword(password)) {
       console.log("⚠️ Weak password:", password);
       return res.status(400).json({
@@ -39,8 +36,6 @@ export const register = async (req, res) => {
       });
     }
 
-    // ✅ Check if email already exists
-    console.log("🔍 Checking for existing user...");
     const existingUser = await db
       .select()
       .from(users)
@@ -50,12 +45,8 @@ export const register = async (req, res) => {
       return res.status(400).json({ message: "Email already exists." });
     }
 
-    // ✅ Hash password
-    console.log("🔐 Hashing password...");
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ✅ Insert user into DB
-    console.log("🧾 Inserting new user into DB...");
     await db.insert(users).values({
       name,
       email,
@@ -96,7 +87,7 @@ export const login = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      maxAge: 24 * 60 * 60 * 1000,
     });
 
     res.json({ message: "Login successful", token });
@@ -122,7 +113,7 @@ export const logout = (req, res) => {
 /**
  * 🧩 AUTH CHECK CONTROLLER
  */
-export const authChecker = (req, res) => {
+export const authChecker = async (req, res) => {
   try {
     const token = req.cookies?.token;
     if (!token) return res.status(200).json({ loggedIn: false, user: null });
@@ -130,9 +121,17 @@ export const authChecker = (req, res) => {
     const decoded = jwt.verify(token, JWT_SECRET);
     if (!decoded) return res.status(200).json({ loggedIn: false, user: null });
 
+    // ✅ Fetch full user from DB to get name
+    const [user] = await db.select().from(users).where(eq(users.id, decoded.id));
+    if (!user) return res.status(200).json({ loggedIn: false, user: null });
+
     res.status(200).json({
       loggedIn: true,
-      user: { id: decoded.id, email: decoded.email },
+      user: {
+        id: user.id,
+        name: user.name, // now includes name
+        email: user.email,
+      },
     });
   } catch (err) {
     console.error("❌ Auth check error:", err);

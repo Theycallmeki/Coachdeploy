@@ -19,26 +19,10 @@ export const chatbotResponse = async (req, res) => {
     const [user] = await db.select().from(users).where(eq(users.id, userId));
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    const lowerPrompt = prompt.toLowerCase();
-
-    // Determine if detailed health info should be included
-    let includeHealthData = false;
-    const healthKeywords = [
-      "goal", "goals", "weight", "fat", "bmi", "muscle",
-      "abs", "strength", "diet", "nutrition", "calories",
-      "exercise", "fitness", "health", "workout", "cardio"
-    ];
-
-    for (const keyword of healthKeywords) {
-      if (lowerPrompt.includes(keyword)) {
-        includeHealthData = true;
-        break;
-      }
-    }
-
-    // Include goals only if relevant
+    // Fetch user goals only if the user asks about goals
     let goalsContext = "";
-    if (includeHealthData) {
+    const lowerPrompt = prompt.toLowerCase();
+    if (lowerPrompt.includes("goal") || lowerPrompt.includes("goals")) {
       const userGoals = await db
         .select()
         .from(goals)
@@ -58,7 +42,7 @@ export const chatbotResponse = async (req, res) => {
     // Combine user prompt + context
     const fullPrompt = `
       You are a helpful fitness chatbot.
-      Use the following user data only if relevant:
+      Use the following user data only if relevant.
       ${context}
       User prompt: "${prompt}"
     `;

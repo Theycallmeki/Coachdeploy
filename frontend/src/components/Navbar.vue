@@ -23,15 +23,15 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import api from '../services/api'; // ✅ use api.js
+import api from '../services/api';
 
 const isLoggedIn = ref(false);
 const router = useRouter();
 
-// Check login status from backend
+// Check login status
 const checkAuth = async () => {
   try {
-    const res = await api.get('/auth/check'); // ✅ use api.js
+    const res = await api.get('/auth/check');
     isLoggedIn.value = res.data.loggedIn;
   } catch (err) {
     console.error('Auth check failed:', err);
@@ -46,9 +46,9 @@ onMounted(() => {
 // Logout handler
 const handleLogout = async () => {
   try {
-    await api.post('/auth/logout'); // ✅ use api.js
+    await api.post('/auth/logout');
     isLoggedIn.value = false;
-    router.push('/auth'); // redirect to auth page after logout
+    router.push('/auth');
   } catch (err) {
     console.error('Logout failed:', err);
   }
@@ -56,44 +56,55 @@ const handleLogout = async () => {
 </script>
 
 <style scoped>
+/* Glassmorphic header */
 header {
-  background-color: #4caf50;
-  padding: 1rem;
-  color: white;
-  text-align: center;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(15px);
+  padding: 1rem 2rem;
+  border-radius: 10px;
+  margin: 1rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
 }
 
+/* Navbar flex layout */
 nav {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 1.5rem;
   align-items: center;
 }
 
+/* Links */
 nav a {
-  color: white;
+  color: #fff;
   text-decoration: none;
   font-weight: bold;
-  transition: color 0.3s;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: all 0.3s;
 }
 
 nav a:hover {
-  color: #dfffd8;
+  background: linear-gradient(135deg, #00ff9d, #00d4ff);
+  color: #000;
+  box-shadow: 0 4px 15px rgba(0, 255, 157, 0.5);
 }
 
+/* Logout button */
 .logout-btn {
-  background: none;
-  border: 1px solid white;
-  color: white;
+  background: linear-gradient(135deg, #00ff9d, #00d4ff);
+  border: none;
+  border-radius: 8px;
+  color: #000;
   font-weight: bold;
-  padding: 0.25rem 0.5rem;
+  padding: 0.5rem 1rem;
   cursor: pointer;
-  transition: 0.3s;
+  transition: all 0.3s;
 }
 
 .logout-btn:hover {
-  background-color: white;
-  color: #4caf50;
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 255, 157, 0.5);
 }
 </style>

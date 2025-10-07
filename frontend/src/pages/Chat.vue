@@ -1,19 +1,24 @@
 <template>
   <div class="chat-wrapper">
     <!-- Sidebar: Chat history -->
-    <div class="sidebar">
+    <div :class="['sidebar', { collapsed: isCollapsed }]">
       <div class="sidebar-header">
-        <h3>Chat History</h3>
-        <button @click="startNewChat" class="new-chat-btn">New Chat</button>
+        <h3 v-if="!isCollapsed">Chat History</h3>
+        <button @click="toggleSidebar" class="collapse-btn">
+          {{ isCollapsed ? '▶' : '◀' }}
+        </button>
+        <button @click="startNewChat" class="new-chat-btn" v-if="!isCollapsed">New Chat</button>
       </div>
-      <ul>
+      <ul v-if="!isCollapsed">
         <li
           v-for="chatItem in chatsHistory"
           :key="chatItem.id"
           :class="{ active: chatItem.id === activeChatId }"
-          @click="loadChat(chatItem.id)"
         >
-          {{ getChatTopic(chatItem) }}
+          <span @click="loadChat(chatItem.id)" class="chat-title">
+            {{ getChatTopic(chatItem) }}
+          </span>
+          <button class="delete-chat-btn" @click.stop="deleteChat(chatItem.id)">🗑️</button>
         </li>
       </ul>
     </div>
@@ -51,15 +56,21 @@ import api from '../services/api.js';
 
 const input = ref('');
 const messages = ref([]);
-const chatsHistory = ref([]); // All chat threads
-const activeChatId = ref(null); // Currently active chat
+const chatsHistory = ref([]);
+const activeChatId = ref(null);
 const messageIdCounter = ref(0);
 const messagesContainer = ref(null);
 
-// Load chat history
+// Sidebar collapse
+const isCollapsed = ref(false);
+function toggleSidebar() {
+  isCollapsed.value = !isCollapsed.value;
+}
+
+// Load chat history on mount
 onMounted(async () => {
   try {
-    const res = await api.get('/api/chats'); // JWT-based endpoint
+    const res = await api.get('/api/chats');
     const grouped = {};
     res.data.forEach(chatItem => {
       if (!grouped[chatItem.id]) grouped[chatItem.id] = [];
@@ -69,7 +80,6 @@ onMounted(async () => {
       id: parseInt(id),
       messages: grouped[id]
     }));
-
     if (chatsHistory.value.length > 0) {
       loadChat(chatsHistory.value[0].id);
     }
@@ -78,31 +88,19 @@ onMounted(async () => {
   }
 });
 
-// Load specific chat
 function loadChat(chatId) {
   const chatThread = chatsHistory.value.find(c => c.id === chatId);
   if (!chatThread) return;
-
   activeChatId.value = chatId;
   messages.value = [];
   messageIdCounter.value = 0;
-
   chatThread.messages.forEach(chatItem => {
-    messages.value.push({
-      id: ++messageIdCounter.value,
-      sender: 'You',
-      text: chatItem.message
-    });
-    messages.value.push({
-      id: ++messageIdCounter.value,
-      sender: 'Bot',
-      text: chatItem.response
-    });
+    messages.value.push({ id: ++messageIdCounter.value, sender: 'You', text: chatItem.message });
+    messages.value.push({ id: ++messageIdCounter.value, sender: 'Bot', text: chatItem.response });
   });
   scrollToBottom();
 }
 
-// Get chat topic (first user message)
 function getChatTopic(chatThread) {
   if (!chatThread.messages || chatThread.messages.length === 0) return "New Chat";
   const firstUserMsg = chatThread.messages.find(msg => msg.message);
@@ -112,7 +110,6 @@ function getChatTopic(chatThread) {
     : firstUserMsg.message;
 }
 
-// Send message
 async function sendMessage() {
   const trimmed = input.value.trim();
   if (!trimmed) return;
@@ -123,39 +120,38 @@ async function sendMessage() {
 
   try {
     const res = await api.post('/api/chatbot', { prompt: trimmed });
-    const botMessage = {
-      id: ++messageIdCounter.value,
-      sender: 'Bot',
-      text: res.data.reply
-    };
+    const botMessage = { id: ++messageIdCounter.value, sender: 'Bot', text: res.data.reply };
     messages.value.push(botMessage);
     scrollToBottom();
 
     if (!activeChatId.value) {
-      // New chat
-      const newChat = {
-        id: res.data.chat.id,
-        messages: [{ message: trimmed, response: res.data.reply }]
-      };
+      const newChat = { id: res.data.chat.id, messages: [{ message: trimmed, response: res.data.reply }] };
       chatsHistory.value.push(newChat);
       activeChatId.value = newChat.id;
     } else {
-      // Append to existing chat
       const chatThread = chatsHistory.value.find(c => c.id === activeChatId.value);
       chatThread.messages.push({ message: trimmed, response: res.data.reply });
     }
   } catch (err) {
     console.error('Chat error:', err);
-    messages.value.push({
-      id: ++messageIdCounter.value,
-      sender: 'Bot',
-      text: 'Oops! Something went wrong.'
-    });
+    messages.value.push({ id: ++messageIdCounter.value, sender: 'Bot', text: 'Oops! Something went wrong.' });
     scrollToBottom();
   }
 }
 
-// Scroll messages
+// Delete chat
+async function deleteChat(chatId) {
+  try {
+    await api.delete(`/api/chats/${chatId}`);
+    chatsHistory.value = chatsHistory.value.filter(c => c.id !== chatId);
+    if (activeChatId.value === chatId) {
+      startNewChat();
+    }
+  } catch (err) {
+    console.error("Failed to delete chat:", err);
+  }
+}
+
 function scrollToBottom() {
   nextTick(() => {
     if (messagesContainer.value) {
@@ -164,7 +160,6 @@ function scrollToBottom() {
   });
 }
 
-// Start a new chat
 function startNewChat() {
   messages.value = [];
   messageIdCounter.value = 0;
@@ -177,40 +172,62 @@ function startNewChat() {
   display: flex;
   height: 600px;
   max-width: 900px;
-  margin: 20px auto;
-  border: 1px solid #ddd;
-  border-radius: 10px;
+  margin: 40px auto;
+  border-radius: 15px;
   overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  transition: all 0.3s;
 }
 
 /* Sidebar */
 .sidebar {
   width: 220px;
-  background: #f3f4f6;
-  padding: 10px;
-  border-right: 1px solid #ddd;
+  background: linear-gradient(180deg, #0f2027, #203a43, #2c5364);
+  padding: 15px;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
   overflow-y: auto;
+  transition: all 0.3s;
+}
+
+.sidebar.collapsed {
+  width: 50px;
 }
 
 .sidebar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
+  color: #fff;
+}
+
+.collapse-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
 }
 
 .new-chat-btn {
-  padding: 2px 6px;
+  padding: 4px 8px;
   font-size: 0.8rem;
   border: none;
-  border-radius: 5px;
-  background-color: #4f46e5;
-  color: white;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #00ff9d, #00d4ff);
+  color: #000;
   cursor: pointer;
+  transition: all 0.3s;
 }
 
 .new-chat-btn:hover {
-  background-color: #4338ca;
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 255, 157, 0.5);
 }
 
 .sidebar ul {
@@ -220,13 +237,33 @@ function startNewChat() {
 
 .sidebar li {
   cursor: pointer;
-  padding: 5px;
-  border-radius: 5px;
-  margin-bottom: 4px;
+  padding: 8px;
+  border-radius: 10px;
+  margin-bottom: 5px;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s;
 }
 
-.sidebar li.active {
-  background-color: #dbeafe;
+.sidebar li.active, .sidebar li:hover {
+  background: linear-gradient(135deg, #00ff9d, #00d4ff);
+  color: #000;
+  box-shadow: 0 4px 15px rgba(0, 255, 157, 0.5);
+}
+
+.delete-chat-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #ff4d4f;
+  font-size: 0.9rem;
+  transition: transform 0.2s;
+}
+
+.delete-chat-btn:hover {
+  transform: scale(1.2);
 }
 
 /* Chat area */
@@ -234,8 +271,9 @@ function startNewChat() {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #f9f9f9;
-  padding: 10px;
+  padding: 15px;
+  color: #fff;
+  transition: margin-left 0.3s;
 }
 
 h2 {
@@ -246,58 +284,68 @@ h2 {
 .messages {
   flex: 1;
   overflow-y: auto;
-  padding: 10px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  padding: 10px;
 }
 
 .message {
   max-width: 70%;
-  padding: 10px;
+  padding: 12px;
   border-radius: 15px;
   word-wrap: break-word;
+  transition: all 0.3s;
 }
 
 .message.user {
-  background-color: #4f46e5;
-  color: white;
+  background: linear-gradient(135deg, #00ff9d, #00d4ff);
+  color: #000;
   align-self: flex-end;
   border-bottom-right-radius: 0;
 }
 
 .message.bot {
-  background-color: #e5e7eb;
-  color: #111;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
   align-self: flex-start;
   border-bottom-left-radius: 0;
+  backdrop-filter: blur(10px);
 }
 
+/* Input area */
 .input-container {
   display: flex;
-  gap: 5px;
+  gap: 10px;
   margin-top: 10px;
 }
 
 .chat-input {
   flex: 1;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
   outline: none;
-  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.chat-input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .submit-btn {
-  padding: 10px 15px;
+  padding: 12px 20px;
   border: none;
-  border-radius: 8px;
-  background-color: #4f46e5;
-  color: white;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #00ff9d, #00d4ff);
+  color: #000;
   cursor: pointer;
+  transition: all 0.3s;
 }
 
 .submit-btn:hover {
-  background-color: #4338ca;
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 255, 157, 0.5);
 }
 </style>

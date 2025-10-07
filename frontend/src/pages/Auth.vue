@@ -24,7 +24,7 @@
           <input v-model="loginEmail" type="email" placeholder="Email" required />
           <input v-model="loginPassword" type="password" placeholder="Password" required />
           <button type="submit" class="submit-btn">Login</button>
-          <p v-if="message" :style="{ color: success ? 'green' : 'red' }">{{ message }}</p>
+          <p v-if="message" :style="{ color: success ? '#00ff9d' : '#ff4d6d' }">{{ message }}</p>
         </form>
 
         <!-- REGISTER FORM -->
@@ -34,7 +34,7 @@
           <input v-model="password" type="password" placeholder="Password" required />
           <input v-model.number="bmi" type="number" step="0.1" placeholder="BMI" required />
           <button type="submit" class="submit-btn">Register</button>
-          <p v-if="message" :style="{ color: success ? 'green' : 'red' }">{{ message }}</p>
+          <p v-if="message" :style="{ color: success ? '#00ff9d' : '#ff4d6d' }">{{ message }}</p>
         </form>
       </div>
     </div>
@@ -48,28 +48,22 @@ import { useRouter } from 'vue-router';
 
 const isLogin = ref(true);
 const router = useRouter();
-
-// Shared state for messages
 const message = ref('');
 const success = ref(false);
 
-// LOGIN FORM STATE
 const loginEmail = ref('');
 const loginPassword = ref('');
 
-// REGISTER FORM STATE
 const name = ref('');
 const email = ref('');
 const password = ref('');
 const bmi = ref(null);
 
-// LOGIN METHOD
 async function loginUser() {
   try {
     const res = await api.post('/auth/login', { email: loginEmail.value, password: loginPassword.value });
     message.value = res.data.message || 'Login successful!';
     success.value = true;
-
     setTimeout(() => router.push('/'), 1000);
   } catch (err) {
     message.value = err.response?.data?.error || 'Login failed.';
@@ -77,7 +71,6 @@ async function loginUser() {
   }
 }
 
-// REGISTER METHOD
 async function registerUser() {
   try {
     const res = await api.post('/auth/register', {
@@ -92,7 +85,7 @@ async function registerUser() {
       success.value = true;
 
       setTimeout(() => {
-        isLogin.value = true; // Switch to login after register
+        isLogin.value = true;
         message.value = '';
       }, 2000);
     } else {
@@ -100,7 +93,6 @@ async function registerUser() {
       success.value = false;
     }
   } catch (err) {
-    console.error('Register error:', err);
     message.value = err.response?.data?.error || 'Server error. Please try again.';
     success.value = false;
   }
@@ -108,41 +100,61 @@ async function registerUser() {
 </script>
 
 <style scoped>
+/* Page Background */
 .container {
-  max-width: 400px;
-  margin: 50px auto;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-  padding: 20px;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  animation: bgAnimation 20s ease infinite;
 }
 
+/* Background gradient animation */
+@keyframes bgAnimation {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Glassmorphic card */
 .box {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(15px);
+  border-radius: 15px;
+  padding: 30px;
+  width: 360px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
 }
 
+/* Toggle buttons */
 .toggle {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
+  gap: 10px;
 }
 
 .toggle-btn {
   flex: 1;
-  padding: 10px;
-  background: #e0e0e0;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.1);
   border: none;
-  border-radius: 5px;
+  border-radius: 10px;
+  color: #fff;
+  font-weight: bold;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: all 0.3s;
 }
 
 .toggle-btn.active {
-  background: #667eea;
-  color: #fff;
+  background: linear-gradient(135deg, #00ff9d, #00d4ff);
+  color: #000;
+  box-shadow: 0 4px 15px rgba(0, 255, 157, 0.5);
 }
 
+/* Form styling */
 .form-wrapper {
   display: flex;
   flex-direction: column;
@@ -150,31 +162,39 @@ async function registerUser() {
 }
 
 input {
-  padding: 10px;
+  padding: 12px;
   margin-bottom: 15px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+  border: none;
+  border-radius: 8px;
   font-size: 14px;
   width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .submit-btn {
-  padding: 10px;
-  background: #764ba2;
-  color: #fff;
+  padding: 12px;
+  background: linear-gradient(135deg, #00ff9d, #00d4ff);
+  color: #000;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background 0.3s;
-  width: 100%;
+  font-weight: bold;
+  transition: all 0.3s;
 }
 
 .submit-btn:hover {
-  background: #667eea;
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 255, 157, 0.5);
 }
 
 p {
   margin-top: 10px;
   font-weight: bold;
+  text-align: center;
 }
 </style>
