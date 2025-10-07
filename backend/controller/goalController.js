@@ -5,7 +5,10 @@ import { eq } from "drizzle-orm";
 export const getGoals = async (req, res) => {
   try {
     const { userId } = req.params;
-    const userGoals = await db.select().from(goals).where(eq(goals.userId, userId));
+    const userGoals = await db
+      .select()
+      .from(goals)
+      .where(eq(goals.userId, userId));
     res.json(userGoals);
   } catch (error) {
     console.error(error);
@@ -15,15 +18,15 @@ export const getGoals = async (req, res) => {
 
 export const createGoal = async (req, res) => {
   try {
-    const { userId, name, description, bmi } = req.body;
+    const { userId, name, description } = req.body;
 
-    if (!userId || !name || !description || !bmi) {
+    if (!userId || !name || !description) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     const newGoal = await db
       .insert(goals)
-      .values({ userId, name, description, bmi })
+      .values({ userId, name, description })
       .returning();
 
     res.status(201).json(newGoal[0]);
@@ -36,11 +39,11 @@ export const createGoal = async (req, res) => {
 export const updateGoal = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, bmi } = req.body;
+    const { name, description } = req.body;
 
     const updated = await db
       .update(goals)
-      .set({ name, description, bmi })
+      .set({ name, description })
       .where(eq(goals.id, id))
       .returning();
 

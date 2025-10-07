@@ -1,9 +1,14 @@
 import express from "express";
-import { updateBMI } from "../controller/bmiController.js";
+import {
+  createBMI,
+  getBMI,
+  updateBMI,
+} from "../controller/bmiController.js";
 
 const router = express.Router();
 
-// PATCH /bmi/:id
-router.patch("/bmi/:id", updateBMI);
+router.patch("/bmi", updateBMI);
+router.post("/bmi", createBMI);
+router.get("/bmi/:userId", getBMI);
 
 export default router;
