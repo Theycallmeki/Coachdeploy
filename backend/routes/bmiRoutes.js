@@ -4,11 +4,12 @@ import {
   getBMI,
   updateBMI,
 } from "../controller/bmiController.js";
+import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.patch("/bmi", updateBMI);
-router.post("/bmi", createBMI);
-router.get("/bmi/:userId", getBMI);
+router.patch("/bmi", authMiddleware, updateBMI);
+router.post("/bmi", authMiddleware, createBMI);
+router.get("/bmi/:userId", authMiddleware, getBMI);
 
 export default router;

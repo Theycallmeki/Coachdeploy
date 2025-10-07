@@ -1,10 +1,11 @@
 import express from "express";
 import { getChats, createChat, deleteChat } from "../controller/chatController.js";
+import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router()
 
-router.get("/chats/:userId", getChats)
-router.post("/chats", createChat)
-router.delete("/chats/:id", deleteChat)
+router.get("/chats/:userId", authMiddleware, getChats)
+router.post("/chats", authMiddleware, createChat)
+router.delete("/chats/:id", authMiddleware, deleteChat)
 
 export default router
