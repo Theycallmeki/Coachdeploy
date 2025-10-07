@@ -1,15 +1,13 @@
 import express from "express";
-import {
-  createBMI,
-  getBMI,
-  updateBMI,
-} from "../controller/bmiController.js";
+import { getBMI, updateBMI } from "../controller/bmiController.js"; // removed createBMI
 import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
+// Get BMI for the logged-in user
+router.get("/bmi", authMiddleware, getBMI);
+
+// Update BMI for the logged-in user
 router.patch("/bmi", authMiddleware, updateBMI);
-router.post("/bmi", authMiddleware, createBMI);
-router.get("/bmi/:userId", authMiddleware, getBMI);
 
 export default router;
