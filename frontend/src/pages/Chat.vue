@@ -5,9 +5,11 @@
       <div class="sidebar-header">
         <h3 v-if="!isCollapsed">Chat History</h3>
         <button @click="toggleSidebar" class="collapse-btn">
-          {{ isCollapsed ? '▶' : '◀' }}
+          {{ isCollapsed ? "▶" : "◀" }}
         </button>
-        <button @click="startNewChat" class="new-chat-btn" v-if="!isCollapsed">New Chat</button>
+        <button @click="startNewChat" class="new-chat-btn" v-if="!isCollapsed">
+          New Chat
+        </button>
       </div>
       <ul v-if="!isCollapsed">
         <li
@@ -18,7 +20,9 @@
           <span @click="loadChat(chatItem.id)" class="chat-title">
             {{ getChatTopic(chatItem) }}
           </span>
-          <button class="delete-chat-btn" @click.stop="deleteChat(chatItem.id)">🗑️</button>
+          <button class="delete-chat-btn" @click.stop="deleteChat(chatItem.id)">
+            🗑️
+          </button>
         </li>
       </ul>
     </div>
@@ -33,7 +37,10 @@
           :key="msg.id"
           :class="['message', msg.sender === 'You' ? 'user' : 'bot']"
         >
-          <div class="text">{{ msg.text }}</div>
+          <div class="text">
+            <Markdown v-if="msg.sender === 'Bot'" :source="msg.text" />
+            <div v-else>{{ msg.text }}</div>
+          </div>
         </div>
       </div>
 
@@ -51,119 +58,146 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue';
-import api from '../services/api.js';
+import Markdown from "vue3-markdown-it"
+import { ref, onMounted, nextTick } from "vue"
+import api from "../services/api.js"
 
-const input = ref('');
-const messages = ref([]);
-const chatsHistory = ref([]);
-const activeChatId = ref(null);
-const messageIdCounter = ref(0);
-const messagesContainer = ref(null);
+const input = ref("")
+const messages = ref([])
+const chatsHistory = ref([])
+const activeChatId = ref(null)
+const messageIdCounter = ref(0)
+const messagesContainer = ref(null)
 
 // Sidebar collapse
-const isCollapsed = ref(false);
+const isCollapsed = ref(false)
 function toggleSidebar() {
-  isCollapsed.value = !isCollapsed.value;
+  isCollapsed.value = !isCollapsed.value
 }
 
 // Load chat history on mount
 onMounted(async () => {
   try {
-    const res = await api.get('/api/chats');
-    const grouped = {};
-    res.data.forEach(chatItem => {
-      if (!grouped[chatItem.id]) grouped[chatItem.id] = [];
-      grouped[chatItem.id].push(chatItem);
-    });
-    chatsHistory.value = Object.keys(grouped).map(id => ({
+    const res = await api.get("/api/chats")
+    const grouped = {}
+    res.data.forEach((chatItem) => {
+      if (!grouped[chatItem.id]) grouped[chatItem.id] = []
+      grouped[chatItem.id].push(chatItem)
+    })
+    chatsHistory.value = Object.keys(grouped).map((id) => ({
       id: parseInt(id),
-      messages: grouped[id]
-    }));
+      messages: grouped[id],
+    }))
     if (chatsHistory.value.length > 0) {
-      loadChat(chatsHistory.value[0].id);
+      loadChat(chatsHistory.value[0].id)
     }
   } catch (err) {
-    console.error('Failed to load chat history:', err);
+    console.error("Failed to load chat history:", err)
   }
-});
+})
 
 function loadChat(chatId) {
-  const chatThread = chatsHistory.value.find(c => c.id === chatId);
-  if (!chatThread) return;
-  activeChatId.value = chatId;
-  messages.value = [];
-  messageIdCounter.value = 0;
-  chatThread.messages.forEach(chatItem => {
-    messages.value.push({ id: ++messageIdCounter.value, sender: 'You', text: chatItem.message });
-    messages.value.push({ id: ++messageIdCounter.value, sender: 'Bot', text: chatItem.response });
-  });
-  scrollToBottom();
+  const chatThread = chatsHistory.value.find((c) => c.id === chatId)
+  if (!chatThread) return
+  activeChatId.value = chatId
+  messages.value = []
+  messageIdCounter.value = 0
+  chatThread.messages.forEach((chatItem) => {
+    messages.value.push({
+      id: ++messageIdCounter.value,
+      sender: "You",
+      text: chatItem.message,
+    })
+    messages.value.push({
+      id: ++messageIdCounter.value,
+      sender: "Bot",
+      text: chatItem.response,
+    })
+  })
+  scrollToBottom()
 }
 
 function getChatTopic(chatThread) {
-  if (!chatThread.messages || chatThread.messages.length === 0) return "New Chat";
-  const firstUserMsg = chatThread.messages.find(msg => msg.message);
-  if (!firstUserMsg) return "New Chat";
+  if (!chatThread.messages || chatThread.messages.length === 0)
+    return "New Chat"
+  const firstUserMsg = chatThread.messages.find((msg) => msg.message)
+  if (!firstUserMsg) return "New Chat"
   return firstUserMsg.message.length > 30
     ? firstUserMsg.message.slice(0, 30) + "..."
-    : firstUserMsg.message;
+    : firstUserMsg.message
 }
 
 async function sendMessage() {
-  const trimmed = input.value.trim();
-  if (!trimmed) return;
+  const trimmed = input.value.trim()
+  if (!trimmed) return
 
-  messages.value.push({ id: ++messageIdCounter.value, sender: 'You', text: trimmed });
-  input.value = '';
-  scrollToBottom();
+  messages.value.push({
+    id: ++messageIdCounter.value,
+    sender: "You",
+    text: trimmed,
+  })
+  input.value = ""
+  scrollToBottom()
 
   try {
-    const res = await api.post('/api/chatbot', { prompt: trimmed });
-    const botMessage = { id: ++messageIdCounter.value, sender: 'Bot', text: res.data.reply };
-    messages.value.push(botMessage);
-    scrollToBottom();
+    const res = await api.post("/api/chatbot", { prompt: trimmed })
+    const botMessage = {
+      id: ++messageIdCounter.value,
+      sender: "Bot",
+      text: res.data.reply,
+    }
+    messages.value.push(botMessage)
+    scrollToBottom()
 
     if (!activeChatId.value) {
-      const newChat = { id: res.data.chat.id, messages: [{ message: trimmed, response: res.data.reply }] };
-      chatsHistory.value.push(newChat);
-      activeChatId.value = newChat.id;
+      const newChat = {
+        id: res.data.chat.id,
+        messages: [{ message: trimmed, response: res.data.reply }],
+      }
+      chatsHistory.value.push(newChat)
+      activeChatId.value = newChat.id
     } else {
-      const chatThread = chatsHistory.value.find(c => c.id === activeChatId.value);
-      chatThread.messages.push({ message: trimmed, response: res.data.reply });
+      const chatThread = chatsHistory.value.find(
+        (c) => c.id === activeChatId.value
+      )
+      chatThread.messages.push({ message: trimmed, response: res.data.reply })
     }
   } catch (err) {
-    console.error('Chat error:', err);
-    messages.value.push({ id: ++messageIdCounter.value, sender: 'Bot', text: 'Oops! Something went wrong.' });
-    scrollToBottom();
+    console.error("Chat error:", err)
+    messages.value.push({
+      id: ++messageIdCounter.value,
+      sender: "Bot",
+      text: "Oops! Something went wrong.",
+    })
+    scrollToBottom()
   }
 }
 
 // Delete chat
 async function deleteChat(chatId) {
   try {
-    await api.delete(`/api/chats/${chatId}`);
-    chatsHistory.value = chatsHistory.value.filter(c => c.id !== chatId);
+    await api.delete(`/api/chats/${chatId}`)
+    chatsHistory.value = chatsHistory.value.filter((c) => c.id !== chatId)
     if (activeChatId.value === chatId) {
-      startNewChat();
+      startNewChat()
     }
   } catch (err) {
-    console.error("Failed to delete chat:", err);
+    console.error("Failed to delete chat:", err)
   }
 }
 
 function scrollToBottom() {
   nextTick(() => {
     if (messagesContainer.value) {
-      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
     }
-  });
+  })
 }
 
 function startNewChat() {
-  messages.value = [];
-  messageIdCounter.value = 0;
-  activeChatId.value = null;
+  messages.value = []
+  messageIdCounter.value = 0
+  activeChatId.value = null
 }
 </script>
 
@@ -247,7 +281,8 @@ function startNewChat() {
   transition: all 0.3s;
 }
 
-.sidebar li.active, .sidebar li:hover {
+.sidebar li.active,
+.sidebar li:hover {
   background: linear-gradient(135deg, #00ff9d, #00d4ff);
   color: #000;
   box-shadow: 0 4px 15px rgba(0, 255, 157, 0.5);
