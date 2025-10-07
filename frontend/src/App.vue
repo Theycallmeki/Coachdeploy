@@ -1,6 +1,7 @@
 <template>
   <div id="app">
-    <Navbar />
+    <!-- Hide Navbar on /auth route -->
+    <Navbar v-if="$route.path !== '/auth'" />
     <router-view />
   </div>
 </template>
@@ -14,7 +15,6 @@ export default {
 </script>
 
 <style>
-/* global styles */
 body {
   font-family: Arial, sans-serif;
   margin: 0;

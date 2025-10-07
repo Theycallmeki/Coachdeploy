@@ -4,7 +4,7 @@ import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router()
 
-router.get("/chats/:userId", authMiddleware, getChats)
+router.get("/chats", authMiddleware, getChats); // leko ke ing :userId
 router.post("/chats", authMiddleware, createChat)
 router.delete("/chats/:id", authMiddleware, deleteChat)
 

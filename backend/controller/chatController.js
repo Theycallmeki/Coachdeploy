@@ -4,25 +4,22 @@ import { chat } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 
 export const getChats = async (req, res) => {
-    try {
-        const { userId } = req.params;
-        console.log("userId:", userId); 
-        
-        if (!userId) {
-            return res.status(400).json({ error: "userId is required"})
-        }
+  try {
+    const userId = req.user.id; // from authMiddleware JWT
+    if (!userId) return res.status(400).json({ error: "User not authenticated" });
 
-        const userChats = await db
-        .select()
-        .from(chat)
-        .where(eq(chat.userId, userId))
+    const userChats = await db
+      .select()
+      .from(chat)
+      .where(eq(chat.userId, userId))
+      .orderBy(chat.createdAt); // optional: sort by time
 
-        return res.status(200).json(userChats)
-    } catch (error) {
-        console.error("Get Chats Error:", error)
-        res.status(500).json({ error: "Failed to fetch chats"})
-    }
-}
+    return res.status(200).json(userChats);
+  } catch (error) {
+    console.error("Get Chats Error:", error);
+    res.status(500).json({ error: "Failed to fetch chats" });
+  }
+};
 
 export const createChat = async (req, res) => {
   try {
